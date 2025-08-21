@@ -37,14 +37,17 @@ def get_google_sheet():
 
 @app.route('/save-attendance', methods=['POST'])
 def save_attendance():
-    """Save attendance data to Google Sheets with students as rows and weeks as columns"""
+    """Save attendance data to Google Sheets with students as rows and dates as columns"""
     try:
         data = request.json
         students = data.get('students', [])
-        current_week = data.get('currentWeek', 1)
+        current_date = data.get('currentDate', '')
         
         if not students:
             return jsonify({'error': 'No student data provided'}), 400
+        
+        if not current_date:
+            return jsonify({'error': 'No date provided'}), 400
         
         # Get Google Sheet
         sheet = get_google_sheet()
@@ -59,20 +62,25 @@ def save_attendance():
         
         # Initialize sheet structure if empty
         if not all_values:
-            headers = ['Student Name', 'Week 1']
+            headers = ['Student Name', current_date]
             sheet.append_row(headers)
             all_values = [headers]
         
-        # Ensure we have enough week columns
-        week_col_name = f'Week {current_week}'
+        # Ensure we have the date column
         headers = all_values[0] if all_values else ['Student Name']
         
-        if week_col_name not in headers:
-            # Add new week column
-            headers.append(week_col_name)
+        if current_date not in headers:
+            # Add new date column (sorted insertion)
+            date_columns = [h for h in headers[1:] if h != 'Student Name']
+            date_columns.append(current_date)
+            # Sort dates chronologically
+            date_columns.sort()
+            headers = ['Student Name'] + date_columns
+            
+            # Update sheet headers
             sheet.update(f'A1:{chr(65 + len(headers) - 1)}1', [headers])
         
-        week_col_index = headers.index(week_col_name)
+        date_col_index = headers.index(current_date)
         
         # Process each student
         updated_students = []
@@ -91,26 +99,71 @@ def save_attendance():
                     break
             
             if student_row:
-                # Update existing student's attendance for this week
-                sheet.update_cell(student_row, week_col_index + 1, attendance_status)
+                # Update existing student's attendance for this date
+                sheet.update_cell(student_row, date_col_index + 1, attendance_status)
             else:
                 # Add new student
                 new_row = [student_name] + [''] * (len(headers) - 1)
-                new_row[week_col_index] = attendance_status
+                new_row[date_col_index] = attendance_status
                 sheet.append_row(new_row)
             
             updated_students.append(student_name)
         
         return jsonify({
             'success': True, 
-            'message': f'Successfully saved attendance for Week {current_week}',
+            'message': f'Successfully saved attendance for {current_date}',
             'studentsUpdated': updated_students,
-            'week': current_week
+            'date': current_date
         })
         
     except Exception as e:
         print(f"Error saving attendance: {e}")
         return jsonify({'error': f'Failed to save attendance: {str(e)}'}), 500
+
+@app.route('/get-attendance', methods=['POST'])
+def get_attendance():
+    """Get attendance data for a specific date"""
+    try:
+        data = request.json
+        target_date = data.get('date', '')
+        
+        if not target_date:
+            return jsonify({'error': 'No date provided'}), 400
+        
+        sheet = get_google_sheet()
+        if not sheet:
+            return jsonify({'error': 'Could not connect to Google Sheets'}), 500
+        
+        # Get all data
+        all_values = sheet.get_all_values()
+        
+        if len(all_values) <= 1:  # Only headers or empty
+            return jsonify({'attendance': []})
+        
+        headers = all_values[0] if all_values else []
+        
+        # Find the date column
+        if target_date not in headers:
+            return jsonify({'attendance': []})  # Date not found
+        
+        date_col_index = headers.index(target_date)
+        attendance_data = []
+        
+        # Extract attendance for the target date
+        for row in all_values[1:]:  # Skip header
+            if row and row[0]:  # If student name exists
+                student_name = row[0]
+                status = row[date_col_index] if date_col_index < len(row) else 'A'
+                attendance_data.append({
+                    'name': student_name,
+                    'status': status
+                })
+        
+        return jsonify({'attendance': attendance_data})
+        
+    except Exception as e:
+        print(f"Error getting attendance: {e}")
+        return jsonify({'error': f'Failed to get attendance: {str(e)}'}), 500
 
 @app.route('/get-students', methods=['GET'])
 def get_students():
@@ -124,27 +177,29 @@ def get_students():
         all_values = sheet.get_all_values()
         
         if len(all_values) <= 1:  # Only headers or empty
-            return jsonify({'students': [], 'weeks': []})
+            return jsonify({'students': [], 'dates': []})
         
-        # Extract student names and available weeks
+        # Extract student names and available dates
         headers = all_values[0] if all_values else []
         students = []
         
         for row in all_values[1:]:  # Skip header
             if row and row[0]:  # If student name exists
                 student_data = {'name': row[0]}
-                # Get attendance for each week
-                for i, week_header in enumerate(headers[1:], start=1):
+                # Get attendance for each date
+                for i, date_header in enumerate(headers[1:], start=1):
                     if i < len(row):
-                        student_data[week_header.lower().replace(' ', '_')] = row[i]
+                        student_data[f'date_{i}'] = row[i]
                 students.append(student_data)
         
-        # Extract week numbers from headers
-        weeks = [h for h in headers[1:] if h.startswith('Week')]
+        # Extract dates from headers (skip first column which is student names)
+        dates = [h for h in headers[1:] if h != 'Student Name']
+        # Sort dates chronologically
+        dates.sort()
         
         return jsonify({
             'students': students,
-            'weeks': weeks,
+            'dates': dates,
             'headers': headers
         })
         

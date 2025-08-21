@@ -6,7 +6,7 @@ if (!localStorage.getItem("authenticated")) {
   window.location.href = "../index.html";
 }
 
-let currentWeek = 1;
+let currentDate = new Date().toISOString().split('T')[0]; // Today's date in YYYY-MM-DD format
 let students = [];
 
 // Load existing students from Google Sheets on page load
@@ -80,10 +80,72 @@ async function checkBackendStatus() {
 
 // Check backend status on page load
 document.addEventListener('DOMContentLoaded', () => {
+  // Set up date picker with current date
+  const dateInput = document.getElementById('attendanceDate');
+  if (dateInput) {
+    dateInput.value = currentDate;
+    dateInput.addEventListener('change', (e) => {
+      currentDate = e.target.value;
+      console.log('Date changed to:', currentDate);
+      // Reload attendance data for the new date
+      loadAttendanceForDate(currentDate);
+    });
+  }
+  
   checkBackendStatus();
   // Recheck every 30 seconds
   setInterval(checkBackendStatus, 30000);
 });
+
+// Function to load attendance data for a specific date
+async function loadAttendanceForDate(date) {
+  try {
+    const response = await fetch(`${PYTHON_BACKEND_URL}/get-attendance`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        date: date
+      })
+    });
+    
+    if (response.ok) {
+      const data = await response.json();
+      // Update the attendance table with the loaded data
+      if (data.attendance) {
+        updateAttendanceTable(data.attendance);
+      }
+    }
+  } catch (error) {
+    console.log('Could not load attendance for date:', error.message);
+  }
+}
+
+// Function to update attendance table with date-specific data
+function updateAttendanceTable(attendanceData) {
+  const tbody = document.querySelector("#studentsTable tbody");
+  const rows = tbody.querySelectorAll('tr');
+  
+  rows.forEach(row => {
+    const studentName = row.cells[0].textContent;
+    const checkbox = row.querySelector('input[type="checkbox"]');
+    const statusText = row.querySelector('.status-text');
+    
+    // Find attendance for this student on the selected date
+    const studentAttendance = attendanceData.find(att => att.name === studentName);
+    
+    if (studentAttendance) {
+      const isPresent = studentAttendance.status === 'P';
+      checkbox.checked = isPresent;
+      statusText.textContent = isPresent ? '✅ Present' : '❌ Absent';
+    } else {
+      // Default to absent if no data found
+      checkbox.checked = false;
+      statusText.textContent = '❌ Absent';
+    }
+  });
+}
 
 // Function to save data to Google Sheets via Python backend
 async function saveToGoogleSheets(studentsData) {
@@ -97,7 +159,7 @@ async function saveToGoogleSheets(studentsData) {
       },
       body: JSON.stringify({
         students: studentsData,
-        currentWeek: currentWeek
+        currentDate: currentDate
       })
     });
     
@@ -118,7 +180,7 @@ async function saveToGoogleSheets(studentsData) {
     const newData = studentsData.map(student => ({
       name: student.name,
       status: student.status,
-      week: currentWeek,
+      date: currentDate,
       timestamp: new Date().toISOString()
     }));
     existingData.push(...newData);
@@ -175,19 +237,6 @@ function addStudentToTable(name) {
   });
 }
 
-// Week navigation
-document.getElementById("prevWeek").addEventListener("click", () => {
-  if (currentWeek > 1) {
-    currentWeek--;
-    document.getElementById("weekDisplay").textContent = `Week ${currentWeek}`;
-  }
-});
-
-document.getElementById("nextWeek").addEventListener("click", () => {
-  currentWeek++;
-  document.getElementById("weekDisplay").textContent = `Week ${currentWeek}`;
-});
-
 // Submit attendance
 document.getElementById("submitBtn").addEventListener("click", async () => {
   const rows = document.querySelectorAll("#studentsTable tbody tr");
@@ -211,9 +260,9 @@ document.getElementById("submitBtn").addEventListener("click", async () => {
   try {
     const result = await saveToGoogleSheets(studentsData);
     if (result && result.studentsUpdated) {
-      alert(`Attendance saved successfully for Week ${currentWeek}!\nUpdated: ${result.studentsUpdated.join(', ')}`);
+      alert(`Attendance saved successfully for ${currentDate}!\nUpdated: ${result.studentsUpdated.join(', ')}`);
     } else {
-      alert(`Attendance saved successfully for Week ${currentWeek}!`);
+      alert(`Attendance saved successfully for ${currentDate}!`);
     }
   } catch (err) {
     console.error("Error saving attendance:", err);

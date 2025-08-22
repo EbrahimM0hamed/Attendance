@@ -24,12 +24,31 @@ SERVICE_ACCOUNT_INFO = {
     "token_uri": "https://oauth2.googleapis.com/token"
 }
 
-def get_google_sheet():
-    """Initialize and return Google Sheets client"""
+def get_google_sheet(teacher_username=None, teacher_name=None):
+    """Initialize and return Google Sheets client with teacher-specific sheet"""
     try:
         credentials = Credentials.from_service_account_info(SERVICE_ACCOUNT_INFO, scopes=SCOPES)
         client = gspread.authorize(credentials)
-        sheet = client.open_by_key(SPREADSHEET_ID).sheet1
+        spreadsheet = client.open_by_key(SPREADSHEET_ID)
+        
+        # Create teacher-specific sheet name
+        if teacher_name:
+            sheet_name = f"{teacher_name.replace(' ', '_')}"
+        elif teacher_username:
+            sheet_name = f"{teacher_username}"
+        else:
+            sheet_name = "Attendance_General"
+        
+        # Try to get existing sheet or create new one
+        try:
+            sheet = spreadsheet.worksheet(sheet_name)
+            print(f"Found existing sheet: {sheet_name}")
+        except gspread.WorksheetNotFound:
+            sheet = spreadsheet.add_worksheet(title=sheet_name, rows="100", cols="20")
+            print(f"Created new sheet: {sheet_name}")
+            # Initialize with headers
+            sheet.update('A1:B1', [['Student Name', 'Date']])
+        
         return sheet
     except Exception as e:
         print(f"Error connecting to Google Sheets: {e}")
@@ -42,6 +61,8 @@ def save_attendance():
         data = request.json
         students = data.get('students', [])
         current_date = data.get('currentDate', '')
+        teacher_username = data.get('teacherUsername', '')
+        teacher_name = data.get('teacherName', '')
         
         if not students:
             return jsonify({'error': 'No student data provided'}), 400
@@ -49,8 +70,8 @@ def save_attendance():
         if not current_date:
             return jsonify({'error': 'No date provided'}), 400
         
-        # Get Google Sheet
-        sheet = get_google_sheet()
+        # Get teacher-specific Google Sheet
+        sheet = get_google_sheet(teacher_username, teacher_name)
         if not sheet:
             return jsonify({'error': 'Could not connect to Google Sheets'}), 500
         
@@ -122,15 +143,17 @@ def save_attendance():
 
 @app.route('/get-attendance', methods=['POST'])
 def get_attendance():
-    """Get attendance data for a specific date"""
+    """Get attendance data for a specific date from teacher-specific sheet"""
     try:
         data = request.json
         target_date = data.get('date', '')
+        teacher_username = data.get('teacherUsername', '')
+        teacher_name = data.get('teacherName', '')
         
         if not target_date:
             return jsonify({'error': 'No date provided'}), 400
         
-        sheet = get_google_sheet()
+        sheet = get_google_sheet(teacher_username, teacher_name)
         if not sheet:
             return jsonify({'error': 'Could not connect to Google Sheets'}), 500
         
@@ -165,11 +188,15 @@ def get_attendance():
         print(f"Error getting attendance: {e}")
         return jsonify({'error': f'Failed to get attendance: {str(e)}'}), 500
 
-@app.route('/get-students', methods=['GET'])
+@app.route('/get-students', methods=['POST'])
 def get_students():
-    """Get existing students from Google Sheets"""
+    """Get existing students from teacher-specific Google Sheet"""
     try:
-        sheet = get_google_sheet()
+        data = request.json or {}
+        teacher_username = data.get('teacherUsername', '')
+        teacher_name = data.get('teacherName', '')
+        
+        sheet = get_google_sheet(teacher_username, teacher_name)
         if not sheet:
             return jsonify({'error': 'Could not connect to Google Sheets'}), 500
         
@@ -211,6 +238,16 @@ def get_students():
 def health_check():
     """Health check endpoint"""
     return jsonify({'status': 'Python backend is running'})
+
+@app.route('/admin/teachers', methods=['GET'])
+def get_all_teachers():
+    """Admin endpoint to get all teacher information"""
+    # This could be expanded for admin functionality
+    return jsonify({
+        'message': 'Admin access required',
+        'total_teachers': 20,
+        'system_status': 'active'
+    })
 
 if __name__ == '__main__':
     print("Starting Python backend for Google Sheets...")

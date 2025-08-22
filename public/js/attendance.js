@@ -1,10 +1,14 @@
 // Python backend configuration
 const PYTHON_BACKEND_URL = 'http://localhost:5000';
 
-// Check authentication
+// Check authentication and get teacher info
 if (!localStorage.getItem("authenticated")) {
   window.location.href = "../index.html";
 }
+
+const teacherUsername = localStorage.getItem("teacherUsername") || "unknown";
+const teacherName = localStorage.getItem("teacherName") || "Teacher";
+const teacherNameEn = localStorage.getItem("teacherNameEn") || "Teacher";
 
 let currentDate = new Date().toISOString().split('T')[0]; // Today's date in YYYY-MM-DD format
 let students = [];
@@ -13,7 +17,14 @@ let students = [];
 async function loadStudentsFromSheet() {
   try {
     const response = await fetch(`${PYTHON_BACKEND_URL}/get-students`, {
-      method: 'GET'
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        teacherUsername: teacherUsername,
+        teacherName: teacherNameEn
+      })
     });
     
     if (response.ok) {
@@ -80,6 +91,12 @@ async function checkBackendStatus() {
 
 // Check backend status on page load
 document.addEventListener('DOMContentLoaded', () => {
+  // Display teacher welcome message
+  const welcomeElement = document.querySelector('h2');
+  if (welcomeElement && teacherName) {
+    welcomeElement.textContent = `Attendance Dashboard - ${teacherName}`;
+  }
+  
   // Set up date picker with current date
   const dateInput = document.getElementById('attendanceDate');
   if (dateInput) {
@@ -106,7 +123,9 @@ async function loadAttendanceForDate(date) {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        date: date
+        date: date,
+        teacherUsername: teacherUsername,
+        teacherName: teacherNameEn
       })
     });
     
@@ -159,7 +178,9 @@ async function saveToGoogleSheets(studentsData) {
       },
       body: JSON.stringify({
         students: studentsData,
-        currentDate: currentDate
+        currentDate: currentDate,
+        teacherUsername: teacherUsername,
+        teacherName: teacherNameEn
       })
     });
     
@@ -273,5 +294,8 @@ document.getElementById("submitBtn").addEventListener("click", async () => {
 // Logout
 document.getElementById("logoutBtn").addEventListener("click", () => {
   localStorage.removeItem("authenticated");
+  localStorage.removeItem("teacherUsername");
+  localStorage.removeItem("teacherName");
+  localStorage.removeItem("teacherNameEn");
   window.location.href = "../index.html";
 });

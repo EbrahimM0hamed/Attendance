@@ -250,7 +250,7 @@ button:active {
 }
 
 .muted { 
-  color: var(--muted); 
+  color:#b91c1c; 
   margin-top: 8px; 
   font-size: 13px;
 }

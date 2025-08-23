@@ -7,13 +7,8 @@ const CONFIG = {
     
     // Production (cloud deployment)
     PRODUCTION: {
-        // TODO: Replace with your actual deployed backend URL after deployment
-        // Examples:
-        // Heroku: 'https://your-app-name.herokuapp.com'
-        // Railway: 'https://your-app-name.railway.app'
-        // Render: 'https://your-app-name.onrender.com'
-        // PythonAnywhere: 'https://yourusername.pythonanywhere.com'
-        BACKEND_URL: 'https://YOUR-BACKEND-URL-HERE.herokuapp.com'  // ⚠️ UPDATE THIS!
+        // ✅ Updated with your Railway deployment URL
+        BACKEND_URL: 'https://web-production-7d438.up.railway.app'
     }
 };
 

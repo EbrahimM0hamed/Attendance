@@ -9,6 +9,16 @@ app = Flask(__name__)
 # Enable CORS for all domains and origins (GitHub Pages, localhost, etc.)
 CORS(app, origins=['*'], supports_credentials=True)
 
+# Root route to handle Railway domain access
+@app.route('/')
+def root():
+    return {
+        'message': 'Attendance System Backend is running!',
+        'status': 'active',
+        'version': '1.0.0',
+        'endpoints': ['/health', '/get-students', '/save-attendance', '/get-attendance', '/admin/teachers']
+    }
+
 # Google Sheets setup
 SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
 SPREADSHEET_ID = '1cavwLatmG70zkhRpgZ1uyqGJtrPJRSSN1YRZPeq0ves'

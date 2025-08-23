@@ -8,7 +8,7 @@ const CONFIG = {
     // Production (cloud deployment)
     PRODUCTION: {
         // ✅ Updated with your Railway deployment URL
-        BACKEND_URL: 'https://web-production-7d438.up.railway.app'
+        BACKEND_URL: 'https://web-production-6e231.up.railway.app'
     }
 };
 

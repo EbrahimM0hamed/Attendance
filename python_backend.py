@@ -6,7 +6,8 @@ import json
 import os
 
 app = Flask(__name__)
-CORS(app)  # Enable CORS for Live Server
+# Enable CORS for all domains and origins (GitHub Pages, localhost, etc.)
+CORS(app, origins=['*'], supports_credentials=True)
 
 # Google Sheets setup
 SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
@@ -253,4 +254,7 @@ if __name__ == '__main__':
     print("Starting Python backend for Google Sheets...")
     print("Make sure you've shared your Google Sheet with:")
     print("resala-attendance@resala-469320.iam.gserviceaccount.com")
-    app.run(debug=True, port=5000)
+    
+    # Use environment port for cloud deployment, default to 5000 for local
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port, debug=False)

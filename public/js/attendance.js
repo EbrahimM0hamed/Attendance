@@ -1,6 +1,3 @@
-// Python backend configuration
-const PYTHON_BACKEND_URL = 'http://localhost:5000';
-
 // Check authentication and get teacher info
 if (!localStorage.getItem("authenticated")) {
   window.location.href = "../index.html";
@@ -16,7 +13,7 @@ let students = [];
 // Load existing students from Google Sheets on page load
 async function loadStudentsFromSheet() {
   try {
-    const response = await fetch(`${PYTHON_BACKEND_URL}/get-students`, {
+    const response = await fetch(`${BACKEND_URL}/get-students`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -64,7 +61,7 @@ function loadStudentsFromLocalStorage() {
 async function checkBackendStatus() {
   const statusElement = document.getElementById('backendStatus');
   try {
-    const response = await fetch(`${PYTHON_BACKEND_URL}/health`, { 
+    const response = await fetch(`${BACKEND_URL}/health`, { 
       method: 'GET',
       timeout: 3000 
     });
@@ -117,7 +114,7 @@ document.addEventListener('DOMContentLoaded', () => {
 // Function to load attendance data for a specific date
 async function loadAttendanceForDate(date) {
   try {
-    const response = await fetch(`${PYTHON_BACKEND_URL}/get-attendance`, {
+    const response = await fetch(`${BACKEND_URL}/get-attendance`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -171,7 +168,7 @@ async function saveToGoogleSheets(studentsData) {
   try {
     console.log('Attempting to save to Google Sheets via Python backend...');
     
-    const response = await fetch(`${PYTHON_BACKEND_URL}/save-attendance`, {
+    const response = await fetch(`${BACKEND_URL}/save-attendance`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

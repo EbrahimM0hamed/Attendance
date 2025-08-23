@@ -10,41 +10,41 @@
 
 <body>
     <header class="topbar">
-        <h2>Attendance Dashboard</h2>
-        <div>
-            <span id="backendStatus"
-                style="margin-right: 10px; padding: 4px 8px; border-radius: 4px; font-size: 12px;">Backend:
-                Checking...</span>
-            <label for="attendanceDate" style="margin-right: 10px; color: white;">Date:</label>
-            <input type="date" id="attendanceDate" style="margin-right: 10px; padding: 4px;">
+        <div class="topbar-left">
+            <h2>📋 Attendance Dashboard</h2>
+            <span id="backendStatus">Backend: Checking...</span>
+        </div>
+        <div class="topbar-right">
+            <label for="attendanceDate" class="mobile-hidden">Date:</label>
+            <input type="date" id="attendanceDate" placeholder="Select date">
             <button id="logoutBtn">Logout</button>
         </div>
     </header>
 
     <main class="container">
         <section class="card">
-            <h3>Add Student</h3>
+            <h3>➕ Add Student</h3>
             <div class="row">
-                <input id="studentName" placeholder="Student full name">
+                <input id="studentName" placeholder="Enter student full name">
                 <button id="addStudentBtn">Add Student</button>
             </div>
         </section>
 
         <section class="card">
-            <h3>Mark Attendance</h3>
-            <div id="tableWrap">
+            <h3>✅ Mark Attendance</h3>
+            <div class="table-container">
                 <table id="studentsTable">
                     <thead>
                         <tr>
                             <th>Student Name</th>
-                            <th>Status</th>
+                            <th>Present</th>
                         </tr>
                     </thead>
                     <tbody></tbody>
                 </table>
             </div>
             <div class="row">
-                <button id="submitBtn">Submit Attendance</button>
+                <button id="submitBtn">💾 Submit Attendance</button>
             </div>
         </section>
     </main>

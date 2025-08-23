@@ -218,17 +218,52 @@ async function saveToGoogleSheets(studentsData) {
 
 // Add student
 document.getElementById("addStudentBtn").addEventListener("click", () => {
-  const name = document.getElementById("studentName").value.trim();
-  if (name && !students.includes(name)) {
-    students.push(name);
-    addStudentToTable(name);
-    document.getElementById("studentName").value = "";
-    
-    // Save updated students list to localStorage
-    localStorage.setItem('students', JSON.stringify(students));
-  } else if (name && students.includes(name)) {
-    alert("Student already exists in the list!");
+  const addBtn = document.getElementById("addStudentBtn");
+  const nameInput = document.getElementById("studentName");
+  const name = nameInput.value.trim();
+  
+  if (!name) {
+    // Error state for empty name
+    addBtn.classList.add('error');
+    addBtn.textContent = '❌ Enter Name First';
+    setTimeout(() => {
+      addBtn.classList.remove('error');
+      addBtn.textContent = 'Add Student';
+    }, 2000);
+    nameInput.focus();
+    return;
   }
+  
+  if (students.includes(name)) {
+    // Error state for duplicate student
+    addBtn.classList.add('error');
+    addBtn.textContent = '❌ Student Exists';
+    setTimeout(() => {
+      addBtn.classList.remove('error');
+      addBtn.textContent = 'Add Student';
+    }, 2000);
+    nameInput.focus();
+    nameInput.select();
+    return;
+  }
+  
+  // Success state
+  addBtn.classList.add('success');
+  addBtn.textContent = '✅ Student Added';
+  
+  students.push(name);
+  addStudentToTable(name);
+  nameInput.value = "";
+  
+  // Save updated students list to localStorage
+  localStorage.setItem('students', JSON.stringify(students));
+  
+  // Reset button after 1 second
+  setTimeout(() => {
+    addBtn.classList.remove('success');
+    addBtn.textContent = 'Add Student';
+    nameInput.focus(); // Focus back to input for next student
+  }, 1000);
 });
 
 // Add student to table
@@ -257,6 +292,7 @@ function addStudentToTable(name) {
 
 // Submit attendance
 document.getElementById("submitBtn").addEventListener("click", async () => {
+  const submitBtn = document.getElementById("submitBtn");
   const rows = document.querySelectorAll("#studentsTable tbody tr");
   const studentsData = [];
   
@@ -271,20 +307,53 @@ document.getElementById("submitBtn").addEventListener("click", async () => {
   });
 
   if (studentsData.length === 0) {
-    alert("No students to save attendance for!");
+    // Error state for no students
+    submitBtn.classList.add('error');
+    submitBtn.textContent = '❌ No Students Found';
+    setTimeout(() => {
+      submitBtn.classList.remove('error');
+      submitBtn.textContent = '💾 Submit Attendance';
+    }, 2000);
     return;
   }
 
   try {
+    // Show loading state
+    submitBtn.classList.add('submitting');
+    submitBtn.textContent = '⏳ Saving Attendance...';
+    
     const result = await saveToGoogleSheets(studentsData);
+    
+    // Show success state
+    submitBtn.classList.remove('submitting');
+    submitBtn.classList.add('success');
+    submitBtn.textContent = '✅ Attendance Saved!';
+    
     if (result && result.studentsUpdated) {
-      alert(`Attendance saved successfully for ${currentDate}!\nUpdated: ${result.studentsUpdated.join(', ')}`);
+      console.log(`Attendance saved successfully for ${currentDate}!\nUpdated: ${result.studentsUpdated.join(', ')}`);
     } else {
-      alert(`Attendance saved successfully for ${currentDate}!`);
+      console.log(`Attendance saved successfully for ${currentDate}!`);
     }
+    
+    // Reset button after 3 seconds
+    setTimeout(() => {
+      submitBtn.classList.remove('success');
+      submitBtn.textContent = '💾 Submit Attendance';
+    }, 3000);
+    
   } catch (err) {
     console.error("Error saving attendance:", err);
-    alert("Error saving attendance: " + err.message);
+    
+    // Show error state
+    submitBtn.classList.remove('submitting');
+    submitBtn.classList.add('error');
+    submitBtn.textContent = '❌ Save Failed - Try Again';
+    
+    // Reset button after 3 seconds
+    setTimeout(() => {
+      submitBtn.classList.remove('error');
+      submitBtn.textContent = '💾 Submit Attendance';
+    }, 3000);
   }
 });
 

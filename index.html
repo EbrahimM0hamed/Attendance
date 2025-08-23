@@ -3,24 +3,56 @@
 
 <head>
     <meta charset="utf-8">
-    <title>Teacher Login - Attendance</title>
+    <title>📚 Teacher Login - Attendance System</title>
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <link rel="stylesheet" href="./public/css/style.css">
 </head>
 
-<body class="center">
-    <div class="card">
-        <h1>Teacher Login</h1>
-        <form id="loginForm">
-            <label>Username
-                <input type="text" id="username" required autocomplete="username" placeholder="e.g., ahmed.hassan">
-            </label>
-            <label>Password
-                <input type="password" id="password" required autocomplete="current-password">
-            </label>
-            <button type="submit">Login</button>
-        </form>
-        <p id="err" class="error"></p>
+<body class="login-body">
+    <!-- Background Elements -->
+    <div class="login-background">
+        <div class="bg-shape shape-1"></div>
+        <div class="bg-shape shape-2"></div>
+        <div class="bg-shape shape-3"></div>
+    </div>
+
+    <!-- Login Container -->
+    <div class="login-container">
+        <div class="login-card">
+            <!-- Header Section -->
+            <div class="login-header">
+                <div class="login-icon">🎓</div>
+                <h1>Attendance System</h1>
+                <p class="login-subtitle">Welcome back! Please sign in to continue</p>
+            </div>
+
+            <!-- Login Form -->
+            <form id="loginForm" class="login-form-container">
+                <div class="input-group">
+                    <div class="input-icon">👤</div>
+                    <input type="text" id="username" required autocomplete="username"
+                        placeholder="Username">
+                </div>
+
+                <div class="input-group">
+                    <div class="input-icon">🔒</div>
+                    <input type="password" id="password" required autocomplete="current-password"
+                        placeholder="Password">
+                </div>
+
+                <button type="submit" class="login-btn">
+                    <span class="btn-text">🔐 Sign In</span>
+                </button>
+            </form>
+
+            <!-- Error Message -->
+            <div id="err" class="error-message"></div>
+
+            <!-- Footer -->
+            <div class="login-footer">
+                <p>🏫 Resala Management System</p>
+            </div>
+        </div>
     </div>
 
     <script src="./public/js/login.js"></script>
